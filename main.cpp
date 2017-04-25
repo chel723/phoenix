@@ -26,7 +26,6 @@ int main( int argc, const char** argv )
 {
     CommandLineParser parser(argc, argv, keys);
     parser.about("ISEP C++ 2017");
-
     if (parser.has("help")) {
         parser.printMessage();
         return 0;
@@ -46,7 +45,7 @@ int main( int argc, const char** argv )
     cout <<" 4 -> dilate " << endl;
     cout <<" 5 -> brighten / darken " << endl;
     cout <<" 6 -> panorama \n " << endl;
-    cin >> num;
+     cin  >> num;
 
     if (num == 6)
     {int number_files =0;
