@@ -85,7 +85,6 @@ int main( int argc, const char** argv )
         imshow(result_name, pano);
 
         waitKey(0);
-
         return 0;
     }
     else
@@ -112,7 +111,6 @@ int main( int argc, const char** argv )
         destroyWindow("img");
 
         return 0;
-
     }
 }
 
@@ -121,7 +119,6 @@ static void onChange(int pos , void* userInput)
 {
     if(pos <= 0)
         return;
-
     // result
     Mat imgFactor;
     namedWindow("Modified", WINDOW_AUTOSIZE);//create window for blur image
@@ -157,4 +154,3 @@ static void onChange(int pos , void* userInput)
     imshow("Modified", imgFactor);
 
 }
-
