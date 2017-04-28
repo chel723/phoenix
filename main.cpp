@@ -21,6 +21,7 @@ int num;
 
 // call back function to execute every time the trackbar change
 static void onChange(int pos, void* userInput);
+void call_menu();
 
 int main( int argc, const char** argv )
 {
@@ -38,14 +39,14 @@ int main( int argc, const char** argv )
         return 0;
     }
 
-    cout <<"Please tell me which option you choose: " << endl;
-    cout <<" 1 -> blur " << endl;
-    cout <<" 2 -> resize " << endl;
-    cout <<" 3 -> erode " << endl;
-    cout <<" 4 -> dilate " << endl;
-    cout <<" 5 -> brighten / darken " << endl;
-    cout <<" 6 -> panorama \n " << endl;
-     cin  >> num;
+    do
+    {
+            call_menu();
+            
+            if (num ==0)
+            {
+                    return 0;
+            }
 
     if (num == 6)
     {int number_files =0;
@@ -85,7 +86,8 @@ int main( int argc, const char** argv )
         imshow(result_name, pano);
 
         waitKey(0);
-        return 0;
+        
+        destroyWindow(result_name);
     }
     else
     {
@@ -95,9 +97,12 @@ int main( int argc, const char** argv )
 
         Mat img = imread(imageName);
         namedWindow("Original", WINDOW_AUTOSIZE);
+            
+        Mat imgFactor;
+        namedWindow("Modified", WINDOW_AUTOSIZE);//create window for blur image
 
         // create the Trackbar
-        createTrackbar("Factor", "Original", &factorAmount, 20, onChange, &img);
+        createTrackbar("Factor", "Modified", &factorAmount, 20, onChange, &img);
 
         imshow("Original", img);
 
@@ -108,10 +113,12 @@ int main( int argc, const char** argv )
         waitKey(0);
 
         // Destroy the windows
-        destroyWindow("img");
-
-        return 0;
+        destroyWindow("Original");
+        destroyWindow("Modified");
+            
     }
+    }while(1);
+        return 0;
 }
 
 // Trackbar call back function
@@ -153,4 +160,17 @@ static void onChange(int pos , void* userInput)
     // Show the result
     imshow("Modified", imgFactor);
 
+}
+
+void call_menu()
+{
+    cout <<"Please tell me which option you choose: " << endl;
+    cout <<" 1 -> blur " << endl;
+    cout <<" 2 -> resize " << endl;
+    cout <<" 3 -> erode " << endl;
+    cout <<" 4 -> dilate " << endl;
+    cout <<" 5 -> brighten / darken " << endl;
+    cout <<" 6 -> panorama \n " << endl;
+    cout <<" Press '0' to exit ... \n" << endl;
+    cin  >> num;
 }
