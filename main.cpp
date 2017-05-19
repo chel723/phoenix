@@ -110,7 +110,7 @@ int main( int argc, const char** argv )
             std::cin >> imageName;
 
             Mat img = imread(imageName);
-            std::cerr << "Original size " << img.rows << " X " << img.cols << std::endl;
+            //std::cerr << "Original size " << img.rows << " X " << img.cols << std::endl;
             namedWindow("Original", WINDOW_AUTOSIZE);
             Mat imgFactor = img.clone();
             namedWindow("Modified", WINDOW_AUTOSIZE);
