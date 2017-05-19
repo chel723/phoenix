@@ -2,30 +2,37 @@
 // Created by chelseaw on 18/04/17.
 //
 
-#include <iostream>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include "opencv2/stitching.hpp"
-
-using namespace std;
-using namespace cv;
+#include "Blur.h"
+#include "Resize.h"
+#include "Erode.h"
+#include "Dilate.h"
+#include "Brighten.h"
 
 const String keys =
         "{help h usage ?  |      | print this message   }"
 // "{@image          |<none>| image to show        }"
 ;
 
+struct data_input {
+    Mat* img;
+    Mat* imgFactor;
+    Action* action;
+};
+
 // store the position of trackbar
 int factorAmount=10;
 int num;
-
 // call back function to execute every time the trackbar change
 static void onChange(int pos, void* userInput);
+void call_menu();
+// create vector to switch menu
+std::vector<Action*> action_vector = { new Blur(), new Resize(),new Erode(), new Dilate(), new Brighten() };
 
 int main( int argc, const char** argv )
 {
     CommandLineParser parser(argc, argv, keys);
     parser.about("ISEP C++ 2017");
+
     if (parser.has("help")) {
         parser.printMessage();
         return 0;
@@ -38,119 +45,170 @@ int main( int argc, const char** argv )
         return 0;
     }
 
-    cout <<"Please tell me which option you choose: " << endl;
-    cout <<" 1 -> blur " << endl;
-    cout <<" 2 -> resize " << endl;
-    cout <<" 3 -> erode " << endl;
-    cout <<" 4 -> dilate " << endl;
-    cout <<" 5 -> brighten / darken " << endl;
-    cout <<" 6 -> panorama \n " << endl;
-     cin  >> num;
 
-    if (num == 6)
-    {int number_files =0;
+    do{
 
-        cout << "How many files you want to read ? "<<endl;
-        cin >> number_files;
+        call_menu();
 
-        vector<string> files(number_files);
-
-        bool try_use_gpu = false;
-        Stitcher::Mode mode = Stitcher::PANORAMA;
-        vector<Mat> imgs;
-        string result_name = "result.jpg";
-
-        for(int i =0; i < number_files;++i)
+        if(num == 0)
         {
-            //read files
-            cout << "\nPlease input the image file name (for example: joconde.jpg): "<<endl;
-            cin >> files[i];
+            return 0;
+        };
 
-            Mat img = imread(files[i]);
-            imgs.push_back(img);
+        if (num == 1)
+        {
+
+            int number_files;
+
+            std::cout << "How many files you want to read ? "<<std::endl;
+            std::cin >> number_files;
+
+            std::vector<string> files(number_files);
+
+            bool try_use_gpu = false;
+            Stitcher::Mode mode = Stitcher::PANORAMA;
+            std::vector<Mat> imgs;
+            string result_name = "result.jpg";
+
+            for(int i =0; i < number_files;++i)
+            {
+                //read files
+                std::cout << "\nPlease input the image file name (for example: joconde.jpg): "<<std::endl;
+                std::cin >> files[i];
+
+                Mat img = imread(files[i]);
+                imgs.push_back(img);
+            }
+
+            //use stitching function
+            Mat pano;
+            Ptr<Stitcher> stitcher = Stitcher::create(mode, try_use_gpu);
+            Stitcher::Status status = stitcher->stitch(imgs, pano);
+
+            if (status != Stitcher::OK)
+            {
+                std::cout << "Can't stitch images, error code = " << int(status) << std::endl;
+                return -1;
+            }
+
+            imwrite(result_name, pano);
+            imshow(result_name, pano);
+
+            waitKey(0);
+
+            destroyWindow(result_name);
+
+            waitKey(1);
+            //return 0;
         }
 
-        //use stiching function
-        Mat pano;
-        Ptr<Stitcher> stitcher = Stitcher::create(mode, try_use_gpu);
-        Stitcher::Status status = stitcher->stitch(imgs, pano);
+        else
 
-        if (status != Stitcher::OK)
         {
-            cout << "Can't stitch images, error code = " << int(status) << endl;
-            return -1;
+            string imageName;
+            std::cout<<"\n Please tell me which image you like (for example: joconde.jpg): " <<std::endl;
+            std::cin >> imageName;
+
+            Mat img = imread(imageName);
+            std::cerr << "Original size " << img.rows << " X " << img.cols << std::endl;
+            namedWindow("Original", WINDOW_AUTOSIZE);
+            Mat imgFactor = img.clone();
+            namedWindow("Modified", WINDOW_AUTOSIZE);
+
+            data_input data;
+
+            data.action = action_vector[num - 2];
+            data.img = &img;
+            data.imgFactor = &imgFactor;
+            // create the Trackbar
+            imshow("Original", img);
+
+            imshow("Modified", imgFactor);
+
+            createTrackbar("Factor","Modified", &factorAmount, 20, onChange, &data);
+
+            // Call back to onChange function
+            onChange(factorAmount, &data);
+
+            // wait app for a key to exit
+            waitKey(0);
+
+            // Destroy the windows
+
+            destroyWindow("Original");
+            destroyWindow("Modified");
+            waitKey(1);
+            //return 0;
         }
 
-        imwrite(result_name, pano);
-        imshow(result_name, pano);
+    }while(1);
 
-        waitKey(0);
-        return 0;
-    }
-    else
-    {
-        string imageName;
-        cout<<"\n Please tell me which image you like (for example: joconde.jpg): " <<endl;
-        cin >> imageName;
-
-        Mat img = imread(imageName);
-        namedWindow("Original", WINDOW_AUTOSIZE);
-
-        // create the Trackbar
-        createTrackbar("Factor", "Original", &factorAmount, 20, onChange, &img);
-
-        imshow("Original", img);
-
-        // Call back to onChange function
-        onChange(factorAmount, &img);
-
-        // wait app for a key to exit
-        waitKey(0);
-
-        // Destroy the windows
-        destroyWindow("img");
-
-        return 0;
-    }
 }
 
-// Trackbar call back function
 static void onChange(int pos , void* userInput)
 {
     if(pos <= 0)
         return;
+
     // result
-    Mat imgFactor;
     namedWindow("Modified", WINDOW_AUTOSIZE);//create window for blur image
-
+    Mat imgFactor;
     // casting the input user img to
-    Mat* img= (Mat*)userInput;
-    Mat element = getStructuringElement( MORPH_RECT, Size(2*pos+1,2*pos+1), Point(pos,pos));
+    data_input* data = (data_input*)userInput;
 
-    // Apply a filter
-    switch (num){
-        case 1:
-            blur(*img, imgFactor, Size(pos, pos));
-            break;
+    //Mat* img= data->img;
+    Action *action = data -> action;
 
-        case 2:
-            resize(*img, imgFactor, Size(63*pos,48*pos));
-            break;
+    action -> run(factorAmount, *(data->img), *(data->imgFactor));
 
-        case 3:
-            erode(*img, imgFactor, element);
-            break;
+    //  Mat element = getStructuringElement( MORPH_RECT, Size(2*pos+1,2*pos+1), Point(pos,pos));
 
-        case 4:
-            dilate(*img, imgFactor, element);
-            break;
+    /* // Apply a filter
+     switch (num) {
+         case 1:
+             blur(*img, imgFactor, Size(pos, pos));
+             break;
 
-        case 5:
-            img->convertTo(imgFactor, -1, 0.1*pos, pos);
-            break;
+         case 2:
+             resize(*img, imgFactor, Size(63*pos,48*pos));
+             break;
+
+         case 3:
+             erode(*img, imgFactor, element);
+             break;
+
+         case 4:
+             dilate(*img, imgFactor, element);
+             break;
+
+         case 5:
+             img->convertTo(imgFactor, -1, 0.1*pos, pos);
+             break;
+
     }
-
+ */
     // Show the result
-    imshow("Modified", imgFactor);
+    //imshow("Modified", imgFactor);
+
+}
+
+void call_menu()
+{
+    std::cout <<"Please tell me which option you choose:  " << std::endl;
+    std::cout <<"1 -> it will panorama " << std::endl;
+
+    for(int i = 0; i < action_vector.size() ; ++i)
+    {
+
+        std::cout << (i+2) << " -> " << action_vector[i]->description() << std::endl;
+    }
+    /*cout <<" 2 -> resize " << endl;
+    cout <<" 3 -> erode " << endl;
+    cout <<" 4 -> dilate " << endl;
+    cout <<" 5 -> brighten / darken " << endl;
+    cout <<" 6 -> panorama \n " << endl;*/
+
+    std::cout <<" Press '0' to quit \n" <<std::endl;
+    std::cin >> num;
 
 }
